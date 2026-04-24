@@ -1,450 +1,366 @@
-\# End-to-End Near Real-Time Recruitment Data Pipeline with Kafka, Spark, Airflow, Docker, and GCP
+# End-to-End Near Real-Time Recruitment Data Pipeline with Kafka, Spark, Airflow, Docker, and GCP
 
-
-
-\## Overview
-
-
+## Overview
 
 This project is an end-to-end near real-time data engineering pipeline for recruitment tracking events.
 
-
-
-The pipeline ingests raw event data from `tracking.csv`, stores the source file in Google Cloud Storage as a raw data lake, replays events into Kafka, processes them with Spark Structured Streaming, stores raw events in Cassandra, writes hourly aggregated facts into MySQL, validates data quality with Airflow, and visualizes business metrics in Grafana.
-
-
+The pipeline stores raw tracking data in Google Cloud Storage, replays CSV records into Kafka to simulate near real-time event streaming, processes events with Spark Structured Streaming, stores raw events in Cassandra, writes hourly aggregated facts into MySQL, validates data quality with Airflow, and visualizes business metrics in Grafana.
 
 This project is designed as a junior/middle-level Data Engineer portfolio project.
 
+---
 
+## Architecture
 
-\---
+![Architecture](docs/architecture1.png)
 
+---
 
+## Tech Stack
 
-\## Architecture
+- Google Cloud Storage
+- Docker
+- Apache Kafka
+- Apache Spark Structured Streaming
+- Apache Cassandra
+- MySQL
+- Apache Airflow
+- Grafana
+- Python
 
+---
 
+## Key Features
+
+- Stored raw source data in GCP Cloud Storage as a raw data lake.
+- Replayed CSV records into Kafka to simulate near real-time event streaming.
+- Processed Kafka events with Spark Structured Streaming.
+- Stored raw events in Cassandra as a raw event layer.
+- Aggregated hourly event metrics into MySQL.
+- Orchestrated GCS download, Kafka replay, and data quality checks using Airflow DAGs.
+- Visualized recruitment analytics metrics using Grafana.
+- Logged data quality check results into MySQL.
+
+---
+
+## Data Flow
 
 ```text
-
-GCP Cloud Storage
-
-&#x20;     |
-
-&#x20;     | Airflow DAG: download\_tracking\_from\_gcs
-
-&#x20;     v
-
 tracking.csv
+  -> GCP Cloud Storage
+  -> Airflow download DAG
+  -> Kafka topic: tracking-events
+  -> Spark Structured Streaming
+  -> Cassandra raw table: logs.tracking_raw
+  -> MySQL fact table: fact_events_hourly
+  -> Grafana dashboard
+  -> Airflow quality checks
+```
 
-&#x20;     |
+---
 
-&#x20;     | Airflow DAG / Python replay script
+## Project Structure
 
-&#x20;     v
-
-Kafka topic: tracking-events
-
-&#x20;     |
-
-&#x20;     | Spark Structured Streaming
-
-&#x20;     v
-
-+----------------------+----------------------+
-
-| Cassandra             | MySQL                |
-
-| Raw event storage     | Hourly fact table    |
-
-| logs.tracking\_raw     | fact\_events\_hourly   |
-
-+----------------------+----------------------+
-
-&#x20;                             |
-
-&#x20;                             v
-
-&#x20;                         Grafana Dashboard
-
-
-
-Airflow also runs data quality checks against Cassandra and MySQL.
-
-
-
-Tech Stack
-
-Google Cloud Storage
-
-Docker
-
-Apache Kafka
-
-Apache Spark Structured Streaming
-
-Apache Cassandra
-
-MySQL
-
-Apache Airflow
-
-Grafana
-
-Python
-
-
-
-Key Features
-
-Stores raw source data in GCP Cloud Storage.
-
-Replays CSV records into Kafka to simulate near real-time event streaming.
-
-Processes Kafka events with Spark Structured Streaming.
-
-Stores raw events in Cassandra as a raw data layer.
-
-Aggregates hourly event metrics into MySQL.
-
-Uses Airflow to orchestrate GCS download, Kafka replay, and data quality checks.
-
-Uses Grafana to visualize recruitment event metrics.
-
-Includes quality check logging in MySQL.
-
-
-
-
-
-Data Flow
-
-tracking.csv
-
-&#x20; -> GCP Cloud Storage
-
-&#x20; -> Airflow download DAG
-
-&#x20; -> Kafka topic tracking-events
-
-&#x20; -> Spark Structured Streaming
-
-&#x20; -> Cassandra raw table
-
-&#x20; -> MySQL hourly fact table
-
-&#x20; -> Grafana dashboard
-
-&#x20; -> Airflow quality checks
-
-
-
-
-
+```text
 realtime-recruitment-pipeline-gcp/
-
 ├── dags/
-
-│   ├── download\_tracking\_from\_gcs.py
-
-│   ├── replay\_tracking\_csv\_to\_kafka.py
-
-│   └── quality\_check\_cassandra\_mysql.py
-
+│   ├── download_tracking_from_gcs.py
+│   ├── replay_tracking_csv_to_kafka.py
+│   └── quality_check_cassandra_mysql.py
 ├── data/
-
-│   ├── raw/
-
-│   │   └── tracking.csv
-
 │   └── sample/
-
-│       └── tracking\_sample.csv
-
+│       └── tracking_sample.csv
 ├── docs/
-
+│   ├── architecture.png
 │   ├── gcp-bucket-tracking.png
-
 │   ├── docker-containers.png
-
 │   ├── spark-streaming-ui.png
-
 │   ├── grafana-dashboard.png
-
 │   ├── airflow-dags.png
-
 │   ├── airflow-download-gcs-success.png
-
 │   ├── airflow-quality-check-success.png
-
 │   └── mysql-quality-log.png
-
 ├── jobs/
-
-│   ├── replay\_tracking\_csv\_to\_kafka.py
-
-│   └── kafka\_to\_cassandra\_mysql\_stream.py
-
+│   ├── replay_tracking_csv_to_kafka.py
+│   └── kafka_to_cassandra_mysql_stream.py
 ├── sql/
-
-│   ├── init\_mysql.sql
-
-│   └── init\_cassandra.cql
-
+│   ├── init_mysql.sql
+│   └── init_cassandra.cql
 ├── docker-compose.yml
-
 ├── requirements.txt
-
 ├── .env.example
-
 ├── .gitignore
-
 └── README.md
+```
 
+---
 
+## GCP Cloud Storage Raw Data Lake
 
-GCP Cloud Storage Raw Data Lake
+The source file `tracking.csv` is uploaded to a Google Cloud Storage bucket and used as the raw data source for the pipeline.
 
-The source file tracking.csv is uploaded to a GCP Cloud Storage bucket.
+![GCP Bucket](docs/gcp-bucket-tracking.png)
 
+---
 
+## Docker Infrastructure
 
-Docker Infrastructure
+The main data platform runs locally using Docker Compose.
 
-The project runs the main data platform locally using Docker Compose.
+Services included:
 
-Services:
+- Kafka
+- Zookeeper
+- Spark Master
+- Spark Worker
+- Cassandra
+- MySQL
+- Grafana
+- Airflow Webserver
+- Airflow Scheduler
 
+![Docker Containers](docs/docker-containers.png)
 
+---
 
-Kafka
+## Kafka Event Streaming
 
-Zookeeper
+The pipeline replays rows from `tracking.csv` into Kafka topic:
 
-Spark Master
+```text
+tracking-events
+```
 
-Spark Worker
+This step simulates near real-time event ingestion from a source system.
 
-Cassandra
+---
 
-MySQL
+## Spark Structured Streaming
 
-Grafana
+Spark Structured Streaming reads JSON events from Kafka and writes data into two sinks:
 
-Airflow Webserver
+- Cassandra for raw event storage
+- MySQL for hourly aggregated fact tables
 
-Airflow Scheduler
+![Spark Streaming UI](docs/spark-streaming-ui.png)
 
+---
 
+## Cassandra Raw Layer
 
-Spark Structured Streaming
+Cassandra stores raw tracking events in:
 
-Spark reads events from Kafka and writes:
+```text
+logs.tracking_raw
+```
 
-Raw events to Cassandra
+This table acts as the raw event layer for replay, auditing, and downstream processing.
 
-Hourly aggregated metrics to MySQL
+---
 
+## MySQL Data Warehouse Layer
 
+MySQL stores hourly aggregated metrics in:
 
-Grafana Dashboard
+```text
+fact_events_hourly
+```
+
+Main columns:
+
+```text
+event_date
+event_hour
+custom_track
+total_events
+total_bid
+updated_at
+```
+
+Example quality result:
+
+```text
+fact_rows=8877
+total_events=100000
+total_bid=24132.0
+```
+
+---
+
+## Grafana Dashboard
 
 Grafana connects to MySQL and visualizes recruitment event metrics.
 
 Dashboard metrics include:
 
-Total Events
+- Total Events
+- Total Bid
+- Events Over Time
+- Event Type Trend Over Time
+- Events by Event Type
 
-Total Bid
+![Grafana Dashboard](docs/grafana-dashboard.png)
 
-Events Over Time
+---
 
-Event Type Trend Over Time
+## Airflow Orchestration
 
-Events by Event Type
+Airflow manages orchestration tasks for the pipeline.
 
+DAGs included:
 
+- `download_tracking_from_gcs`
+- `replay_tracking_csv_to_kafka`
+- `quality_check_cassandra_mysql`
 
-Airflow Orchestration
+![Airflow DAGs](docs/airflow-dags.png)
 
-Airflow manages orchestration tasks:
+### GCS Download DAG
 
-Download tracking.csv from GCP Cloud Storage
+This DAG downloads `tracking.csv` from Google Cloud Storage into the local pipeline folder.
 
-Replay CSV data into Kafka
+![Airflow GCS Download](docs/airflow-download-gcs-success.png)
 
-Run quality checks on Cassandra and MySQL
+### Data Quality Check DAG
 
+This DAG validates that data exists in Cassandra and MySQL, then logs the result into MySQL.
 
+![Airflow Quality Check](docs/airflow-quality-check-success.png)
 
-GCS Download DAG
+---
 
-Data Quality Check DAG
+## Data Quality Result
 
+The quality check validates:
 
+- Cassandra raw table is not empty.
+- MySQL fact table has aggregated rows.
+- Total events are greater than zero.
+- Quality check result is logged into `pipeline_quality_log`.
 
-Data Quality Result
+![MySQL Quality Log](docs/mysql-quality-log.png)
 
-The quality check validates that data exists in Cassandra and MySQL, then writes the result to pipeline\_quality\_log.
+---
 
+## How to Run
 
+### 1. Start Docker services
 
-MySQL Fact Table
-
-Main fact table:
-
-fact\_events\_hourly
-
-
-
-Example columns:
-
-event\_date
-
-event\_hour
-
-custom\_track
-
-total\_events
-
-total\_bid
-
-updated\_at
-
-
-
-Example quality check result:
-
-fact\_rows=8877
-
-total\_events=100000
-
-total\_bid=24132.0
-
-
-
-How to Run
-
-1\. Start Docker services
-
+```bash
 docker compose up -d
+```
 
+### 2. Create Kafka topic
 
+```bash
+docker exec -it rr-kafka kafka-topics \
+  --bootstrap-server rr-kafka:29092 \
+  --create \
+  --topic tracking-events \
+  --partitions 1 \
+  --replication-factor 1
+```
 
-2\. Create Kafka topic
+### 3. Initialize Cassandra schema
 
-docker exec -it rr-kafka kafka-topics \\
+```bash
+docker cp sql/init_cassandra.cql rr-cassandra:/init_cassandra.cql
+docker exec -it rr-cassandra cqlsh -f /init_cassandra.cql
+```
 
-&#x20; --bootstrap-server rr-kafka:29092 \\
+### 4. Run Spark Streaming job
 
-&#x20; --create \\
+```bash
+docker exec -it rr-spark-master spark-submit \
+  --master spark://rr-spark-master:7077 \
+  --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector_2.12:3.5.1,com.mysql:mysql-connector-j:8.0.33 \
+  --conf spark.cassandra.connection.host=rr-cassandra \
+  --conf spark.cassandra.connection.port=9042 \
+  /opt/project/jobs/kafka_to_cassandra_mysql_stream.py
+```
 
-&#x20; --topic tracking-events \\
+### 5. Replay CSV into Kafka
 
-&#x20; --partitions 1 \\
+```bash
+python jobs/replay_tracking_csv_to_kafka.py --sleep 0.001
+```
 
-&#x20; --replication-factor 1
+### 6. Open UIs
 
-
-
-3\. Initialize Cassandra schema
-
-docker cp sql/init\_cassandra.cql rr-cassandra:/init\_cassandra.cql
-
-docker exec -it rr-cassandra cqlsh -f /init\_cassandra.cql
-
-
-
-4\. Run Spark Streaming job
-
-docker exec -it rr-spark-master spark-submit \\
-
-&#x20; --master spark://rr-spark-master:7077 \\
-
-&#x20; --packages org.apache.spark:spark-sql-kafka-0-10\_2.12:3.5.1,com.datastax.spark:spark-cassandra-connector\_2.12:3.5.1,com.mysql:mysql-connector-j:8.0.33 \\
-
-&#x20; --conf spark.cassandra.connection.host=rr-cassandra \\
-
-&#x20; --conf spark.cassandra.connection.port=9042 \\
-
-&#x20; /opt/project/jobs/kafka\_to\_cassandra\_mysql\_stream.py
-
-
-
-5\. Replay CSV into Kafka
-
-python jobs/replay\_tracking\_csv\_to\_kafka.py --sleep 0.001
-
-
-
-6\. Open UIs
-
+```text
 Spark UI   : http://localhost:8080
-
 Grafana    : http://localhost:3000
-
 Airflow    : http://localhost:8090
-
-
+```
 
 Default Grafana login:
 
+```text
 username: admin
-
 password: admin
-
-
+```
 
 Default Airflow login:
 
+```text
 username: admin
-
 password: admin
+```
 
+---
 
+## Airflow DAGs
 
-Important Notes
+After Airflow is running, open:
 
-The full raw dataset is not pushed to GitHub.
+```text
+http://localhost:8090
+```
 
-A sample dataset is available in data/sample/tracking\_sample.csv.
+Then trigger these DAGs manually:
 
-GCP service account keys are excluded using .gitignore.
+```text
+download_tracking_from_gcs
+quality_check_cassandra_mysql
+```
 
-This project uses local Docker services to avoid unnecessary GCP costs.
+The replay DAG can be triggered when you want to replay the dataset into Kafka:
 
-GCP is used mainly for Cloud Storage as a raw data lake.
+```text
+replay_tracking_csv_to_kafka
+```
 
+Note: Re-running the replay DAG will send the dataset into Kafka again and may increase the aggregated event count in MySQL.
 
+---
 
-Portfolio Highlights
+## Important Notes
+
+- The full raw dataset is not pushed to GitHub.
+- A small sample dataset is available in `data/sample/tracking_sample.csv`.
+- GCP service account keys are excluded using `.gitignore`.
+- The project runs heavy data services locally with Docker to avoid unnecessary GCP costs.
+- GCP is used mainly for Cloud Storage as the raw data lake.
+
+---
+
+## Portfolio Highlights
 
 This project demonstrates:
 
-Batch-to-stream simulation using Kafka
+- GCP Cloud Storage raw data lake integration
+- Batch-to-stream simulation using Kafka
+- Near real-time processing with Spark Structured Streaming
+- Raw event storage with Cassandra
+- Data warehouse-style hourly aggregation with MySQL
+- Airflow workflow orchestration
+- Data quality checks and logging
+- Grafana dashboarding
+- Dockerized local data platform setup
 
-Near real-time stream processing with Spark Structured Streaming
+---
 
-Raw event storage with Cassandra
+## Author
 
-Data warehouse-style hourly aggregation with MySQL
-
-Workflow orchestration with Airflow
-
-Data quality checks
-
-Dashboarding with Grafana
-
-GCP Cloud Storage integration
-
-Dockerized data platform setup
-
-
-
-Author
-
-Tran Thanh Tri
-
+Tran Thanh Tri  
 Data Engineer Portfolio Project
-
