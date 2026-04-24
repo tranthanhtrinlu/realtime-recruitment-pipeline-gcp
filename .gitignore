@@ -1,0 +1,16 @@
+# GCP service account keys
+gcp-key/
+*.json
+
+# Airflow runtime
+logs/
+plugins/
+airflow.db
+webserver_config.py
+
+# Python
+__pycache__/
+*.pyc
+
+# Docker/local runtime
+checkpoints/
