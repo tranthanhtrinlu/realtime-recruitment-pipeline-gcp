@@ -199,7 +199,7 @@ Dashboard metrics include:
 - Event Type Trend Over Time
 - Events by Event Type
 
-![Grafana Dashboard](docs/grafana-dashboard.png)
+![Grafana Dashboard](docs/grafana-dashboard1.png)
 
 ---
 
@@ -213,7 +213,7 @@ DAGs included:
 - `replay_tracking_csv_to_kafka`
 - `quality_check_cassandra_mysql`
 
-![Airflow DAGs](docs/airflow-dags.png)
+![Airflow DAGs](docs/airflow-dags1.png)
 
 ### GCS Download DAG
 
